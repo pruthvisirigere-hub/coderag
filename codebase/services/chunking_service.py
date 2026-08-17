@@ -1,5 +1,5 @@
 from codebase.models import Repository, SourceFile, CodeChunk
-from codebase.services.code_chunker import chunk_code
+from codebase.services.code_chunker import chunk_code, chunk_python_code
 
 
 def create_chunks_for_repository(repository_name):
@@ -10,17 +10,31 @@ def create_chunks_for_repository(repository_name):
     total_chunks = 0
 
     for source_file in source_files:
-        # Remove old chunks if this repository is processed again
         source_file.chunks.all().delete()
 
-        chunks = chunk_code(source_file.content)
+        if source_file.language == "python":
+            chunks = chunk_python_code(source_file.content)
 
-        for index, chunk_content in enumerate(chunks):
-            CodeChunk.objects.create(
-                source_file=source_file,
-                content=chunk_content,
-                chunk_index=index,
-            )
+            for index, chunk in enumerate(chunks):
+                CodeChunk.objects.create(
+                    source_file=source_file,
+                    content=chunk["content"],
+                    chunk_index=index,
+                    symbol_name=chunk["name"],
+                    symbol_type=chunk["type"],
+                    start_line=chunk["start_line"],
+                    end_line=chunk["end_line"],
+                )
+
+        else:
+            chunks = chunk_code(source_file.content)
+
+            for index, chunk_content in enumerate(chunks):
+                CodeChunk.objects.create(
+                    source_file=source_file,
+                    content=chunk_content,
+                    chunk_index=index,
+                )
 
         total_chunks += len(chunks)
 

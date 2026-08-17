@@ -13,12 +13,15 @@ def build_rag_context(question, repository_name, limit=5):
     for result in results:
         context_parts.append(
             f"""
-File: {result["file_path"]}
-Chunk: {result["chunk_index"]}
+        File: {result["file_path"]}
+        Symbol: {result["symbol_name"]}
+        Type: {result["symbol_type"]}
+        Lines: {result["start_line"]} - {result["end_line"]}
+        Chunk: {result["chunk_index"]}
 
-Code:
-{result["content"]}
-"""
+        Code:
+        {result["content"]}
+        """
         )
 
     return "\n".join(context_parts)

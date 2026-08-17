@@ -31,9 +31,37 @@ class CodeChunk(models.Model):
         on_delete=models.CASCADE,
         related_name="chunks",
     )
+
     content = models.TextField()
     chunk_index = models.PositiveIntegerField()
-    embedding = VectorField(dimensions=384, null=True, blank=True)
+
+    symbol_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    symbol_type = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+    )
+
+    start_line = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+    )
+
+    end_line = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+    )
+
+    embedding = VectorField(
+        dimensions=384,
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return f"{self.source_file.file_path} - chunk {self.chunk_index}"
