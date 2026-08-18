@@ -230,6 +230,19 @@ Run the test suite with:
 ```bash
 python manage.py test codebase
 
+Current automated test coverage includes:
+
+- Exact function-name reranking
+- Test-file reranking for test-related questions
+- `/api/ask/` endpoint response behavior
+- Unknown repository validation for `/api/ask/`
+
+Current test result:
+
+```text
+Ran 4 tests
+OK
+
 ## Project Structure
 
 ```text
