@@ -124,3 +124,22 @@ class AskCodebaseAPITests(APITestCase):
             "repository",
             response.data,
         )
+
+    def test_ask_codebase_rejects_missing_question(self):
+        response = self.client.post(
+            "/api/ask/",
+            {
+                "repository": "test_repository",
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertIn(
+            "question",
+            response.data,
+        )
