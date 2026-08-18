@@ -223,7 +223,7 @@ Retrieved rank:
 
 ## Testing
 
-CodeRAG includes automated tests for important retrieval and reranking behavior.
+CodeRAG includes automated tests for important retrieval, reranking, and API behavior.
 
 Run the test suite with:
 
