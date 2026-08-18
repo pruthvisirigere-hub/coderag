@@ -104,3 +104,23 @@ class AskCodebaseAPITests(APITestCase):
             response.data["answer"],
             "The database is configured in config/settings.py.",
         )
+
+    def test_ask_codebase_rejects_unknown_repository(self):
+        response = self.client.post(
+            "/api/ask/",
+            {
+                "repository": "does_not_exist",
+                "question": "Where is the database configured?",
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertIn(
+            "repository",
+            response.data,
+        )
