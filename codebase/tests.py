@@ -7,6 +7,8 @@ from rest_framework.test import APITestCase
 from codebase.models import Repository
 from codebase.services.reranking_service import rerank_results
 
+from git.exc import GitCommandError
+
 
 class RerankingServiceTests(SimpleTestCase):
 
@@ -141,5 +143,33 @@ class AskCodebaseAPITests(APITestCase):
 
         self.assertIn(
             "question",
+            response.data,
+        )
+
+class IngestRepositoryAPITests(APITestCase):
+
+    @patch("codebase.views.ingest_github_repository")
+    def test_ingest_repository_handles_clone_failure(self, mock_ingest):
+        mock_ingest.side_effect = GitCommandError(
+            "clone",
+            128,
+        )
+
+        response = self.client.post(
+            "/api/ingest/",
+            {
+                "name": "invalid_repository",
+                "github_url": "https://github.com/example/invalid-repository.git",
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assertIn(
+            "error",
             response.data,
         )
