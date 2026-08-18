@@ -46,6 +46,7 @@ def answer_codebase_question(question, repository_name):
     Instructions:
     - Answer the question clearly.
     - Base the answer only on the retrieved repository context.
+    - When start and end line numbers are available, mention them in the answer.
     - Mention the exact file path(s) where the relevant code was found.
     - Do not invent files or functionality.
     - If the context is insufficient, clearly say that you do not have enough information.
