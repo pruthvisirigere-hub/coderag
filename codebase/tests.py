@@ -1,13 +1,12 @@
 from unittest.mock import patch
 
 from django.test import SimpleTestCase
+from git.exc import GitCommandError
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from codebase.models import Repository
 from codebase.services.reranking_service import rerank_results
-
-from git.exc import GitCommandError
 
 
 class RerankingServiceTests(SimpleTestCase):
@@ -146,10 +145,39 @@ class AskCodebaseAPITests(APITestCase):
             response.data,
         )
 
+    @patch("codebase.views.answer_codebase_question")
+    def test_ask_codebase_handles_internal_error(self, mock_answer):
+        mock_answer.side_effect = Exception(
+            "Simulated RAG failure"
+        )
+
+        response = self.client.post(
+            "/api/ask/",
+            {
+                "repository": "test_repository",
+                "question": "Where is the database configured?",
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+        self.assertEqual(
+            response.data["error"],
+            "Unable to answer the question at this time.",
+        )
+
+
 class IngestRepositoryAPITests(APITestCase):
 
     @patch("codebase.views.ingest_github_repository")
-    def test_ingest_repository_handles_clone_failure(self, mock_ingest):
+    def test_ingest_repository_handles_clone_failure(
+        self,
+        mock_ingest,
+    ):
         mock_ingest.side_effect = GitCommandError(
             "clone",
             128,
@@ -159,7 +187,10 @@ class IngestRepositoryAPITests(APITestCase):
             "/api/ingest/",
             {
                 "name": "invalid_repository",
-                "github_url": "https://github.com/example/invalid-repository.git",
+                "github_url": (
+                    "https://github.com/example/"
+                    "invalid-repository.git"
+                ),
             },
             format="json",
         )
