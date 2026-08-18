@@ -190,6 +190,15 @@ http://127.0.0.1:8000/
 
 > PostgreSQL and the pgvector extension must already be installed and configured before running the application.
 
+## Docker Setup
+
+CodeRAG can also be run inside Docker.
+
+### Build the Docker image
+
+```bash
+docker build -t coderag .
+
 ## Retrieval Evaluation
 
 CodeRAG includes a small retrieval evaluation pipeline to measure whether the correct source file is being retrieved for a given question.
