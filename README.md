@@ -30,7 +30,7 @@ The application can ingest a public GitHub repository, analyze Python source cod
 - Process Markdown `.md` documentation
 - Parse Python code using Python's Abstract Syntax Tree (AST)
 - Create function- and class-aware Python code chunks
-- Use text-based chunking for Markdown documentation
+- Use heading-aware chunking for Markdown documentation
 - Generate 384-dimensional embeddings using Sentence Transformers
 - Store embeddings in PostgreSQL using pgvector
 - Perform semantic similarity search using cosine distance
@@ -58,7 +58,7 @@ Python (.py) + Markdown (.md) Files
         ↓
         ├── Python → AST-Aware Chunking
         │
-        └── Markdown → Text Chunking
+        └── Markdown → Heading-Aware Chunking
         ↓
 Sentence Transformer Embeddings
         ↓
@@ -340,7 +340,7 @@ CodeRAG currently indexes:
 | File Type | Extension | Processing |
 |---|---|---|
 | Python | `.py` | AST-aware code chunking |
-| Markdown | `.md` | Text-based chunking |
+| Markdown | `.md` | Heading-aware documentation chunking |
 
 Python files are parsed using Python's `ast` module so functions and classes can be represented as meaningful chunks.
 
@@ -439,7 +439,7 @@ Lines:
 
 If AST parsing cannot be used, CodeRAG falls back to normal text chunking.
 
-Markdown documentation uses text-based chunking.
+Markdown documentation uses heading-aware chunking so related documentation sections remain together during retrieval.
 
 ---
 

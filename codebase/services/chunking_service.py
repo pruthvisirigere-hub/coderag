@@ -1,11 +1,17 @@
-from codebase.models import Repository, SourceFile, CodeChunk
-from codebase.services.code_chunker import chunk_code, chunk_python_code
+from codebase.models import Repository, CodeChunk
+from codebase.services.code_chunker import (
+    chunk_code,
+    chunk_markdown,
+    chunk_python_code,
+)
 
 
 def create_chunks_for_repository(repository_name):
-    repository = Repository.objects.get(name=repository_name)
+    repository = Repository.objects.get(
+        name=repository_name
+    )
 
-    source_files = SourceFile.objects.filter(repository=repository)
+    source_files = repository.source_files.all()
 
     total_chunks = 0
 
@@ -13,7 +19,9 @@ def create_chunks_for_repository(repository_name):
         source_file.chunks.all().delete()
 
         if source_file.language == "python":
-            chunks = chunk_python_code(source_file.content)
+            chunks = chunk_python_code(
+                source_file.content
+            )
 
             for index, chunk in enumerate(chunks):
                 CodeChunk.objects.create(
@@ -26,8 +34,23 @@ def create_chunks_for_repository(repository_name):
                     end_line=chunk["end_line"],
                 )
 
+        elif source_file.language == "markdown":
+            chunks = chunk_markdown(
+                source_file.content
+            )
+
+            for index, chunk_content in enumerate(chunks):
+                CodeChunk.objects.create(
+                    source_file=source_file,
+                    content=chunk_content,
+                    chunk_index=index,
+                    symbol_type="markdown_section",
+                )
+
         else:
-            chunks = chunk_code(source_file.content)
+            chunks = chunk_code(
+                source_file.content
+            )
 
             for index, chunk_content in enumerate(chunks):
                 CodeChunk.objects.create(
