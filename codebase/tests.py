@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from codebase.models import Repository
+from codebase.services.code_chunker import chunk_markdown
 from codebase.services.reranking_service import rerank_results
 
 
@@ -63,6 +64,50 @@ class RerankingServiceTests(SimpleTestCase):
             "tests/test_simple.py",
         )
 
+class MarkdownChunkingTests(SimpleTestCase):
+
+    def test_docker_section_keeps_build_and_run_together(self):
+        content = """
+# CodeRAG
+
+Project introduction.
+
+# Docker Setup
+
+## Build the Docker Image
+
+```bash
+docker build -t coderag .
+```
+
+## Run the Docker Container
+
+```bash
+docker run --rm -p 8000:8000 coderag
+```
+
+# Testing
+
+Run the automated tests.
+"""
+
+        chunks = chunk_markdown(content)
+
+        docker_chunk = next(
+            chunk
+            for chunk in chunks
+            if "# Docker Setup" in chunk
+        )
+
+        self.assertIn(
+            "docker build -t coderag .",
+            docker_chunk,
+        )
+
+        self.assertIn(
+            "docker run --rm -p 8000:8000 coderag",
+            docker_chunk,
+        )
 
 class AskCodebaseAPITests(APITestCase):
 

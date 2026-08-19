@@ -40,8 +40,8 @@ The application can ingest a public GitHub repository, analyze Python source cod
 - Validate API requests using Django REST Framework serializers
 - Handle GitHub ingestion and RAG failures with controlled API responses
 - Evaluate retrieval using Top-1 and Top-5 accuracy
-- Automated tests for reranking and API behavior
-- Docker support for containerized execution
+- Run automated tests for reranking, API behavior, error handling, and Markdown chunking
+- Run the application inside Docker
 
 ---
 
@@ -316,7 +316,7 @@ Repository Ingestion
         ↓
 Python / Markdown Processing
         ↓
-Code-Aware or Text Chunking
+AST-Aware / Heading-Aware Chunking
         ↓
 Sentence Transformer Embeddings
         ↓
@@ -344,13 +344,29 @@ CodeRAG currently indexes:
 
 Python files are parsed using Python's `ast` module so functions and classes can be represented as meaningful chunks.
 
-Markdown files such as `README.md` are indexed as documentation and can also be retrieved by the RAG pipeline.
+Markdown files such as `README.md` are indexed as documentation.
+
+Heading-aware chunking keeps related Markdown sections together instead of splitting documentation only by arbitrary line counts.
 
 For example:
 
 ```text
+# Docker Setup
+    ↓
+Build Docker Image
+    +
+Run Docker Container
+    ↓
+Same Markdown Chunk
+```
+
+This improves retrieval for questions that depend on multiple pieces of information from the same documentation section.
+
+Example:
+
+```text
 Question:
-According to the README, how do I run CodeRAG using Docker?
+According to the README, how do I build and run CodeRAG using Docker?
 
 Retrieved source:
 README.md
@@ -400,7 +416,9 @@ Improved Retrieval
 
 ---
 
-# Code-Aware Chunking
+# Code and Document Chunking
+
+## Python Chunking
 
 Python source code is parsed using Python's Abstract Syntax Tree.
 
@@ -439,7 +457,27 @@ Lines:
 
 If AST parsing cannot be used, CodeRAG falls back to normal text chunking.
 
-Markdown documentation uses heading-aware chunking so related documentation sections remain together during retrieval.
+## Markdown Chunking
+
+Markdown documentation uses heading-aware chunking.
+
+Top-level Markdown headings are treated as logical section boundaries so related subsections stay together.
+
+For example:
+
+```text
+# Docker Setup
+        ↓
+## Build the Docker Image
+        +
+## Run the Docker Container
+        ↓
+One Logical Documentation Chunk
+```
+
+This improves retrieval for documentation questions that require multiple related instructions from the same section.
+
+Very large Markdown sections can still be split into smaller chunks to keep retrieval context manageable.
 
 ---
 
@@ -501,9 +539,7 @@ This helps reduce hallucination and keeps answers grounded in the indexed reposi
 
 CodeRAG returns controlled API errors instead of exposing raw application errors to API users.
 
-Examples include:
-
-### Repository Clone Failure
+## Repository Clone Failure
 
 If a GitHub repository cannot be cloned:
 
@@ -513,7 +549,7 @@ If a GitHub repository cannot be cloned:
 }
 ```
 
-### RAG Processing Failure
+## RAG Processing Failure
 
 If an unexpected error occurs while answering a question:
 
@@ -563,7 +599,7 @@ These results apply only to the current small evaluation dataset and should not 
 
 # Testing
 
-CodeRAG includes automated tests for reranking, request validation, API responses, and error handling.
+CodeRAG includes automated tests for reranking, request validation, API responses, error handling, and Markdown chunking.
 
 Run the test suite with:
 
@@ -580,11 +616,12 @@ Current automated test coverage includes:
 5. Missing question validation
 6. Internal RAG failure handling
 7. GitHub repository clone failure handling
+8. Heading-aware Markdown chunking behavior
 
 Current test result:
 
 ```text
-Ran 7 tests
+Ran 8 tests
 OK
 ```
 
@@ -659,28 +696,74 @@ GitPython clones repository
             ↓
 .py and .md files discovered
             ↓
-Python AST / Markdown text chunking
-            ↓
-Sentence Transformer embeddings
-            ↓
-PostgreSQL + pgvector storage
-            ↓
+        ┌─────────────────────────────┐
+        │                             │
+        ↓                             ↓
+Python AST-Aware              Markdown Heading-Aware
+Chunking                      Chunking
+        │                             │
+        └──────────────┬──────────────┘
+                       ↓
+Sentence Transformer Embeddings
+                       ↓
+PostgreSQL + pgvector
+                       ↓
 User asks repository question
-            ↓
+                       ↓
 POST /api/ask/
-            ↓
-Question embedding
-            ↓
-Semantic vector retrieval
-            ↓
-Metadata-aware reranking
-            ↓
-RAG context construction
-            ↓
+                       ↓
+Question Embedding
+                       ↓
+Semantic Vector Retrieval
+                       ↓
+Metadata-Aware Reranking
+                       ↓
+RAG Context Construction
+                       ↓
 OpenRouter LLM
-            ↓
-Grounded answer + sources
+                       ↓
+Grounded Answer + Sources
 ```
+
+---
+
+# Verified End-to-End Behavior
+
+CodeRAG has been tested against both source-code and documentation questions.
+
+## Python Code Example
+
+```text
+Question:
+Where is the add_one function defined?
+
+Answer:
+src/sample/simple.py, lines 1-2
+```
+
+## Markdown Documentation Example
+
+```text
+Question:
+According to the README, how do I build and run CodeRAG using Docker?
+
+Retrieved Source:
+README.md
+```
+
+The system successfully retrieved the Docker documentation section containing both:
+
+```bash
+docker build -t coderag .
+```
+
+and:
+
+```bash
+docker run --rm -p 8000:8000 --env-file .env -e DB_HOST=host.docker.internal coderag
+```
+
+This verifies that heading-aware Markdown chunking can preserve related documentation instructions for retrieval.
 
 ---
 
@@ -691,11 +774,13 @@ CodeRAG was built as a practical RAG engineering project demonstrating how moder
 - Backend API development
 - GitHub repository ingestion
 - Source-code parsing
-- Document ingestion
+- Documentation ingestion
+- Code-aware chunking
+- Heading-aware document chunking
 - Embeddings
 - Vector databases
 - Semantic retrieval
-- Reranking
+- Metadata-aware reranking
 - Retrieval-Augmented Generation
 - LLM integration
 - Evaluation
