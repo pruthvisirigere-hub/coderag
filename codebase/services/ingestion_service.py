@@ -1,5 +1,7 @@
 from codebase.models import Repository, SourceFile
-from codebase.services.repository_loader import load_python_files
+from codebase.services.repository_loader import (
+    load_repository_files,
+)
 
 
 def ingest_local_repository(name, repository_path):
@@ -10,7 +12,7 @@ def ingest_local_repository(name, repository_path):
         },
     )
 
-    files = load_python_files(repository_path)
+    files = load_repository_files(repository_path)
 
     for file_data in files:
         SourceFile.objects.update_or_create(
